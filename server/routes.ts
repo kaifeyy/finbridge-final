@@ -220,9 +220,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Serve course documents via a proxy endpoint so external viewers can load them without exposing query tokens.
   const courseDocs: Record<string, string> = {
-    'income-investing': 'https://cdn.builder.io/o/assets%2Fca35db826797471cb8e33731c10b3ab1%2Ff6d7cfe0397347a9bf821fbeef4f4b24?alt=media&token=93be7fdc-bf13-463b-ac99-768362003904&apiKey=ca35db826797471cb8e33731c10b3ab1',
-    'stock-investing': 'https://cdn.builder.io/o/assets%2Fca35db826797471cb8e33731c10b3ab1%2Fe1a5761f9fa44ab98787183eee34c065?alt=media&token=b590b695-6e58-43f1-819f-418f97bf3f45&apiKey=ca35db826797471cb8e33731c10b3ab1',
-    'stock-trading': 'https://cdn.builder.io/o/assets%2Fca35db826797471cb8e33731c10b3ab1%2F6334288fbb4b4667af07062ece679ac5?alt=media&token=7cea295c-ca95-4e20-b87a-55f3b9acffaf&apiKey=ca35db826797471cb8e33731c10b3ab1',
+    'income-investing': 'https://cdn.builder.io/o/assets%2F553a550bb5bc422b941c5e7aeee716cf%2F769d859e2c7545a5b5dd81b1295fc884?alt=media&token=b4c1adce-034c-4471-bf2f-e7af047509d2&apiKey=553a550bb5bc422b941c5e7aeee716cf',
+    'stock-investing': 'https://cdn.builder.io/o/assets%2F553a550bb5bc422b941c5e7aeee716cf%2F8c6d7f414c3349cf9862183a0d40ad7c?alt=media&token=5d74bc2c-f4dc-494b-a4e8-3447a56fe430&apiKey=553a550bb5bc422b941c5e7aeee716cf',
+    'stock-trading': 'https://cdn.builder.io/o/assets%2F553a550bb5bc422b941c5e7aeee716cf%2Fff0cfe2460ba4784be3df1640a8baf41?alt=media&token=3729c571-e12f-4bb2-b29e-111c380c3e58&apiKey=553a550bb5bc422b941c5e7aeee716cf',
   };
 
   app.get('/courses/doc/:id', async (req, res) => {
