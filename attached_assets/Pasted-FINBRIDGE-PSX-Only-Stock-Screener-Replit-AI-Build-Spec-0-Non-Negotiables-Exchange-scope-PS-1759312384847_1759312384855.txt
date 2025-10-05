@@ -1,0 +1,456 @@
+FINBRIDGE — PSX-Only Stock Screener (Replit AI Build Spec)
+0. Non-Negotiables
+
+Exchange scope: PSX only. Do not reference or fetch from NYSE or yfinance anywhere.
+
+Universe: Dynamically import the top 300 PSX stocks (by market cap or turnover) and keep the list fresh. (described in documentation pasted & the python scrapper )
+
+Currency: PKR everywhere.
+
+Data sources: web scrapping from the given code & its explanation stockanalysis.com 
+
+Realtime feel: Smart polling with stale-while-revalidate caching; no hard page reloads.
+
+1. Purpose
+
+Deliver an investor-grade PSX stock screener that filters equities by financial indicators and risk appetite (low/medium/high), returning a shortlist and CAPM expected returns beside each result.
+
+2. Core Functionality
+
+Investor Input (Filters)
+
+UI exposes adjustable ranges for indicators (min/max): Earnings Yield, ROE, Asset Turnover, Leverage, Dividend Yield, Net Margin, P/E, P/B, EV/EBITDA, 1Y/3Y TSR, Beta, etc.
+
+“Preset risk” chips: Low / Medium / High auto-preload sensible brackets; users can fine-tune.
+
+Algorithmic Filtering
+
+Apply selected ranges to the top-300 PSX universe.
+
+Return a ranked shortlist aligned to the selected risk profile (see risk model below).
+
+Risk Profiling
+
+Map stocks into Low / Medium / High bands using indicator brackets (e.g., Low-risk: higher ROE/dividend, lower beta/leverage/volatility; High-risk: inverse). Make brackets configurable in a JSON policy.
+
+Expected Return (CAPM)
+
+Display next to each stock:
+
+𝐸
+(
+𝑅
+𝑖
+)
+=
+𝑅
+𝑓
++
+𝛽
+𝑖
+⋅
+(
+𝑅
+𝑚
+−
+𝑅
+𝑓
+)
+E(R
+i
+	​
+
+)=R
+f
+	​
+
++β
+i
+	​
+
+⋅(R
+m
+	​
+
+−R
+f
+	​
+
+)
+
+Rf: Pakistan 3M or 6M T-bill proxy (config value).
+
+Rm: Config market return (e.g., PSX KSE-100 expected return).
+
+βi: Estimated from scraped historical price series vs. index; if not feasible, approximate from volatility class + sector beta mapping (fallback).
+
+3. Data Strategy (PSX-only)
+
+Universe ingestion :
+
+
+
+Per-company data:
+
+Scraping using python code is attached
+
+Realtime/last price, change, volume
+
+Fundamentals (P/E, P/B, dividend yield), ratios (ROE, asset turnover, leverage), corporate actions where present
+
+Parse tables/labels into normalized schema.
+
+Historical time series (for chart + beta):
+
+If DPS exposes historical prices per company, scrape paginated history. If not present, use another PSX-official endpoint/page only (still PSX scope). If historical is unavailable, compute beta using short-window price deltas available or fall back to sector beta mapping.
+
+Technical indicators (computed locally):
+
+SMA(20/50/200), EMA(12/26), RSI(14), MACD(12,26,9), ATR(14), 52-week high/low flags.
+
+Resilience & Compliance:
+
+Use Playwright (headless) for dynamic content, Cheerio for parsing static HTML.
+
+Implement ETag/If-Modified-Since, randomized backoff, and server-side cache (Redis or file-cache) with TTLs:
+
+Quotes: 30–60s
+
+Ratios/fundamentals: 12–24h
+
+Universe list: 24h
+
+Configurable User-Agent and polite crawl delay.
+
+4. UI/UX (Apple-style Brief)
+
+Look & feel: Clean white canvas, subtle light-gray dividers, Apple Blue #4A90E2 for primary CTAs, pro gray text hierarchy, soft shadows, 12px corner radius.
+
+Glass effects: Refined backdrop blur on nav and key cards; thin overlay borders; gentle elevation.
+
+Animations:
+
+Apple-like cubic-bezier easing; hover lift ~2px; subtle scale on buttons.
+
+Micro-interactions on filter sliders, chips, and cards.
+
+Typography: Inter + Apple system stack; enable ligatures; clear weight hierarchy for financial metrics.
+
+Pages (separate routes):
+
+Landing (marketing)
+
+Live PSX market preview widgets (animated cards)
+
+Rotating stats, “How it works,” testimonials (portfolio managers/advisors), feature grids
+
+High-signal CTAs with blue gradient
+
+Comprehensive footer (product, legal, contact)
+
+Screener (main app)
+
+Left: filter rail (collapsible) with presets + advanced indicators
+
+Top: search, sort, saved screens, risk chips
+
+Grid of stock cards (clean white) with key KPIs, tags (risk band, dividend, momentum)
+
+Stock Detail
+
+Polylined interactive price graph (intraday/daily toggle), indicators overlays (SMA/EMA/RSI)
+
+Fundamentals, ratios, dividends, corporate actions
+
+CAPM tile with inputs and E(Ri)
+
+Peer comparison and related ideas
+
+Interactions:
+
+Clicking a stock opens detail page (deep link).
+
+Hover reveals micro-metrics; click-through maintains filter state.
+
+Filters drive instant shortlist (debounced).
+
+5. Tech Stack (Replit-friendly)
+
+Frontend: React + Vite, TailwindCSS, Framer Motion for micro-animations, Recharts (or visx) for charts.
+
+Design system: Utility-first with custom Tailwind theme (color tokens, 12px rounding, shadows).
+
+Backend: Node.js (Express/Fastify).
+
+Scraping: Playwright + Cheerio.
+
+State: React Query (SWR) for data fetching, optimistic UI + SWR revalidate.
+
+Cache: In-memory + optional Redis (if enabled in Replit).
+
+Typing: TypeScript end-to-end.
+
+6. Data Model (Key Entities)
+type IndicatorSet = {
+  pe?: number; pb?: number; evEbitda?: number;
+  earningsYield?: number; roe?: number; assetTurnover?: number;
+  leverage?: number; dividendYield?: number; netMargin?: number;
+  rsi14?: number; sma20?: number; sma50?: number; sma200?: number;
+  beta?: number; volatility30d?: number; tsr1y?: number; tsr3y?: number;
+};
+
+type Stock = {
+  ticker: string; name: string; sector?: string;
+  currency: "PKR";
+  lastPrice: number; changePct?: number; volume?: number; updatedAt: string;
+  indicators: IndicatorSet;
+  riskBand: "LOW" | "MEDIUM" | "HIGH";
+};
+
+type UniverseSnapshot = {
+  asOf: string;
+  criteria: "marketCap" | "turnover";
+  stocks: Stock[];
+};
+
+7. Risk Model (Config-Driven)
+
+Provide /config/risk-bands.json with min/max for key indicators per band.
+
+Compute riskBand per stock after indicators are populated.
+
+Allow user presets to override min/max ranges in the Screener UI.
+
+8. Filters (Schwab-style Depth, PSX Data)
+
+Quick filters: Dividend payers, Low beta, Value (low P/E, low P/B), Quality (high ROE), Momentum (TSR/RSI), Income (high DY), Size (large-cap).
+
+Advanced: Numeric sliders for each indicator; sector multi-select; exclude illiquid (min volume).
+
+Persistence: URL-based query params + local saved screens.
+
+9. Realtime & Performance
+
+SWR strategy: Return cached immediately; revalidate in background; push updated cards.
+
+Quotes polling: 30–60s with jitter; stop when tab inactive.
+
+Server aggregation: Batch scrape; hydrate frontend via a single /api/screener payload.
+
+10. Security & Ops
+
+Rotate scraper headers; handle 429s with backoff.
+
+Validate and sanitize all responses.
+
+Feature-flag headless scraping vs. static parsing.
+
+Log scrape errors per-ticker; degrade gracefully (show last good data + timestamp).
+
+11. Deliverables
+
+Complete multi-page app (Landing, Screener, Stock Detail) matching the Apple-style spec.
+
+Working scraper for PSX DPS, assembling top-100 universe and indicators.
+
+CAPM module with configurable Rf and Rm.
+
+Interactive polyline chart with indicators.
+
+End-to-end filtering that precisely shortlists PSX stocks per user inputs.
+
+PKR-only UI, professional micro-animations, hover states, and glass effects.
+
+12. Acceptance Criteria
+
+No references to NYSE/yfinance/US symbols anywhere.
+
+Top-300 PSX list loads and is visible; filters narrow results accurately.
+
+Clicking a stock opens its detail page with working chart, metrics, and CAPM tile.
+
+Landing page is engaging, not bare: live preview cards, feature sections, testimonials, CTAs, robust footer.
+
+All prices and amounts in PKR; time labels localized.
+
+Data refresh without full page reload; stale-while-revalidate implemented.
+
+13. Implementation Hints (Optional)
+
+
+
+
+Frontend: Tailwind theme with #4A90E2 primary, soft shadows, 12px radii, glass header; Framer Motion for 2px hover lift.
+
+Make me this stock screener with Proper nice Ui & filter and there sub filters as mentioned in first txt file ive attached (prompt) and the 2nd file ive attached is of filters & there sub filters explained as excel so make sure to veiw that too to make all filters & there functionality accordingly having all filters defined with all algos and everything, its a key excel file mentioned every filter there subfilter & criterias which we can add accordingly
+
+basically client wants an stock screener like Charles Schwab but for Pakistan stock exchange so make that with proper ui & everything realtime + working no flaw
+
+the 1st file is prompt, 2nd file is excel file containing all the filter & sub filter details explaining it criteria, then the 3rd file is one of the key files as it is of python which holds the code we will use to scrape & get real time date from the stockanalysis website then the data scrapped is sent to a json file which name should be psx_top300.json which is also 4th file, i ran the python locally and the json output file i pasted for ur ease and the last and 5th file holds proper documentation for u to integrate this scrapping easily this should give us real time data & changes whenever user refreshes app, it should not be slow and like show 20 stocks per page distributing all 300 accross the site, this site has to be flawless & according to my needs please integrate real time data i even code a whole scrapper just use it and make me the site with working filters mentioned in excel file, filters like charles schwab, lets get it production ready !!
+
+Basically the scraper in python file i gave u work lik it first fetches top 300 stocks from stockanalysis site then one by one runs there appropirate urls to fetch data from each doing it for all 300 and when it gets all 300/300 done it saves in the psx_top300.json, which must be present in same directory , but this process is kind of slow and displayes in terminal that its done fetching xyz stock & all , so to handle user we can do on front end like making a dynamic loading showing 1/300 stocks loaded changing it dynamcally so user does not think that he is stuck , make this working use same scrapper & all just get it done make a landing page with proper nice professional ui, the major problem that can occur is of data not loading so keep an extra focus on that check again & again till finalizing to make it perfect, with all filters user friendly working perfect
+
+it must be like runs scraper runs everytime user visits website to get fresh stocks not the old ahh data from same json , make it working & dynamic
+
+
+
+
+EXCEL FILE RAW: (AS U CANT OPEN EXCEL FILES) 
+Category	Indicator	Low Risk	Medium Risk	Medium-High Risk	High Risk	Scoring (1-4)
+Basic	Market Capitalization	>100,000 million	30,000-10,000 million	10,000-30,000 million	<10,000 million	1 (Low) – 4 (High)
+Basic	Dividend Yield	>6%	4-6%	1-4%	<1%	1 (Low) – 4 (High)
+Performance	Revenue Growth	>20%	10-20%	4-10%	<4%	1 (Low) – 4 (High)
+Performance	Earnings Yield	> 12%	8 – 12%	4 – 8%	< 4%	1 (Low) – 4 (High)
+Performance	Dividend Yield Growth	>10%	5-10%	1-5%	<1%	1 (Low) – 4 (High)
+Performance	Return on Assets	> 12%	8 – 12%	4 – 8%	< 4%	1 (Low) – 4 (High)
+Performance	Return on Equity	> 20%	15 – 20%	10 – 15%	< 10%	1 (Low) – 4 (High)
+Performance	Net Profit Margin	> 20%	10 – 20%	5 – 10%	< 5%	1 (Low) – 4 (High)
+Performance	Free Cash Flow	Positive	Positive	Negative	Negative	1 (Low) – 4 (High)
+Valuation	P/E Ratio	< 10	10 – 15	15 – 25	> 25	1 (Low) – 4 (High)
+Valuation	P/S Ratio	< 1	1 – 2	2 – 3	> 3	1 (Low) – 4 (High)
+Valuation	P/B Ratio	< 1.0	1.0 – 2.0	2.0 – 3.0	> 3.0	1 (Low) – 4 (High)
+Valuation	EV/EBITDA	< 7	7 – 10	10 – 14	> 14	1 (Low) – 4 (High)
+Valuation	PEG Ratio	< 1	1 – 1.5	1.5 – 2.5	> 2.5	1 (Low) – 4 (High)
+Risk Indicators	Beta	0 – 0.75	0.75 – 1.0	1.0 – 1.25	> 1.25	1 (Low) – 4 (High)
+Risk Indicators	Sharpe Ratio	> 1.0	0.5 – 1.0	0 – 0.5	< 0	1 (Low) – 4 (High)
+Risk Indicators	Treynor Ratio	> 10%	5 – 10%	1 – 5%	< 1%	1 (Low) – 4 (High)
+Risk Indicators	Sortino Ratio	> 1.0	0.5 – 1.0	0 – 0.5	< 0	1 (Low) – 4 (High)
+Risk Indicators	Altman Z-Score	> 3.0	2.5 – 3.0	1.8 – 2.5	< 1.8	1 (Low) – 4 (High)
+Risk Indicators	Value at Risk (VaR)	< 1%	1 – 2%	2 – 3%	> 3%	1 (Low) – 4 (High)
+Short-Term Liquidity	Current Ratio	> 2.0	1.5 – 2.0	1.0 – 1.5	< 1.0	1 (Low) – 4 (High)
+Short-Term Liquidity	Quick Ratio	> 1.5	1.0 – 1.5	0.5 – 1.0	< 0.5	1 (Low) – 4 (High)
+Leverage	Debt-to-Equity Ratio	< 0.5	0.5 – 1.0	1.0 – 1.5	> 1.5	1 (Low) – 4 (High)
+Leverage	Interest Coverage Ratio	> 5	3 – 5	1 – 3	< 1	1 (Low) – 4 (High)
+Efficiency	Asset Turnover	> 1.5	1.0 – 1.5	0.5 – 1.0	< 0.5	1 (Low) – 4 (High)
+Efficiency	Gross Margin	> 40%	30 – 40%	20 – 30%	< 20%	1 (Low) – 4 (High)
+Efficiency	Operating Margin	> 25%	15 – 25%	5 – 15%	< 5%	1 (Low) – 4 (High)
+Growth	EPS Growth (5Y)	> 15% CAGR	10 – 15%	5 – 10%	< 5% or negative	1 (Low) – 4 (High)
+Growth	Revenue Growth (5Y)	> 12% CAGR	8 – 12%	3 – 8%	< 3% or negative	1 (Low)
+
+
+
+I want this screener to be properly functional with a home page, screener page, and a About us page and the information about the website and everything is in the website.docx i pasted take it from that and also display the graph & tablle given in the excel file the excel ive pasted 
+
+here is that excel in raw format too:
+
+MAYS SMIF EXCEL:
+
+		Holdings												MAYS SMIF PERFORMANCE		KSE-100 PERFORMANCE		GRAPH DATA	
+DATE	VALUE	OGDC	UBL 	MARI	NBP	LUCK	FFC	SYS	NESTLE	GAL	BWCL	EFERT	PAKT	PERCENT CHANGE	VALUE CHANGE	INDEX VALUE	DAILY CHANGE	PORTFOLIO % GROWTH	KSE-100 % GROWTH
+6/2/2025	1000000	-0.72%	-0.12%	-0.54%	1.81%	-1.15%	-0.54%	-4.98%	0.57%	-1.75%	-0.65%	-1.26%	0.45%	-0.58%	-5757	118,877.81	-0.68%	0.00%	0.00%
+6/3/2025	994243	0.56%	0.68%	0.34%	0.76%	2.26%	1.79%	-0.84%	0.63%	-0.29%	0.17%	3.56%	-0.03%	0.63%	6311.454564	120,450.87	1.32%	-0.58%	1.32%
+6/4/2025	1000554.455	1.31%	0.14%	0.47%	10.01%	1.87%	0.77%	3.37%	-0.70%	-3.95%	-0.02%	-0.27%	0.78%	1.77%	17701.80941	121,798.87	1.12%	0.06%	2.46%
+6/5/2025	1018256.264	-0.92%	0.02%	-0.33%	-2.28%	-1.03%	-0.50%	-1.68%	0.75%	-1.27%	0.03%	0.02%	-0.66%	-0.80%	-8142.995343	121,641.00	-0.13%	1.83%	2.32%
+6/10/2025	1010113.269	0.18%	-0.04%	-0.17%	-0.58%	-1.92%	1.64%	0.84%	-1.25%	5.87%	0.45%	-0.74%	-0.40%	0.37%	3762.671926	122,024.44	0.32%	1.01%	2.65%
+6/11/2025	1013875.941	2.37%	0.53%	2.98%	3.92%	4.96%	1.88%	0.25%	0.00%	1.49%	1.22%	1.19%	0.54%	1.90%	19259.58737	124,352.68	1.91%	1.39%	4.61%
+6/12/2025	1033135.528	-1.51%	0.86%	0.02%	-1.84%	1.10%	-0.74%	-0.09%	0.21%	-1.60%	1.42%	-0.52%	0.43%	-0.38%	-3946.577717	124,093.12	-0.21%	3.31%	4.39%
+6/13/2025	1029188.95	-1.50%	-0.49%	-1.45%	-2.63%	-2.89%	-1.23%	-3.01%	-0.10%	-2.10%	-1.54%	-1.75%	0.26%	-1.58%	-16298.23622	122,143.57	-1.57%	2.92%	2.75%
+6/16/2025	1012890.714	2.01%	-0.23%	0.87%	4.62%	-1.41%	-0.26%	0.19%	0.00%	-0.08%	-0.39%	-0.72%	-1.69%	0.72%	7328.264316	122,225.36	0.07%	1.29%	2.82%
+6/17/2025	1020218.978	0.57%	0.90%	-0.37%	-0.54%	-1.65%	-0.27%	1.80%	0.04%	0.08%	-0.60%	0.26%	0.17%	0.02%	182.6191971	121,971.04	-0.21%	2.02%	2.60%
+6/18/2025	1020401.598	-1.44%	-1.00%	-1.68%	-2.54%	-1.10%	-0.54%	-1.78%	0.00%	-0.08%	-0.70%	1.03%	0.16%	-1.01%	-10289.72971	120,465.93	-1.23%	2.04%	1.34%
+6/19/2025	1010111.868	-0.23%	1.06%	-0.78%	-0.75%	-0.93%	0.24%	0.60%	-0.07%	-1.81%	0.55%	-1.65%	-1.42%	-0.36%	-3656.604961	120,002.59	-0.38%	1.01%	0.95%
+6/20/2025	1006455.263	0.75%	0.54%	0.33%	0.34%	0.45%	-0.37%	1.65%	-0.07%	-0.51%	-0.85%	-0.85%	-0.65%	0.20%	2027.000899	120,023.24	0.02%	0.65%	0.96%
+6/23/2025	1008482.264	-3.95%	-0.11%	-3.42%	-4.06%	-4.02%	-0.60%	-4.03%	0.11%	-9.89%	-0.33%	-2.01%	-0.23%	-2.96%	-29809.72723	116,167.47	-3.21%	0.85%	-2.28%
+6/24/2025	978672.5365	6.94%	4.29%	5.23%	7.45%	9.40%	1.62%	5.31%	0.41%	7.96%	2.09%	4.01%	2.29%	4.96%	48547.05117	122,246.64	5.23%	-2.13%	2.83%
+6/25/2025	1027219.588	-0.07%	-0.71%	-0.44%	0.15%	0.38%	0.08%	0.47%	0.16%	-0.83%	0.01%	0.63%	-1.43%	-0.09%	-972.7769495	122,761.64	0.42%	2.72%	3.27%
+6/26/2025	1026246.811	-0.26%	-0.15%	-0.80%	-1.35%	-1.86%	-0.01%	-1.31%	-1.00%	-3.28%	-0.09%	-0.55%	2.08%	-0.87%	-8923.216019	122,046.46	-0.58%	2.62%	2.67%
+6/27/2025	1017323.595	1.79%	0.86%	0.98%	1.93%	4.28%	2.23%	1.55%	0.78%	0.86%	0.21%	2.54%	1.30%	1.49%	15178.46803	124,379.07	1.91%	1.73%	4.63%
+6/30/2025	1032502.063	-0.28%	1.08%	-0.36%	0.84%	-0.18%	1.52%	0.67%	0.21%	0.61%	-0.01%	-1.58%	5.98%	0.48%	4934.327358	125,627.31	1.00%	3.25%	5.68%
+7/1/2025	1037436.39	0.46%	5.03%	1.54%	3.07%	-1.54%	5.04%	2.68%	-0.44%	2.49%	1.04%	2.07%	-1.52%	1.77%	18334.61332	128,199.43	2.05%	3.74%	7.84%
+7/2/2025	1055771.003	0.61%	5.51%	1.66%	4.68%	-0.27%	0.39%	1.95%	0.36%	5.00%	-0.16%	1.79%	-0.56%	2.06%	21794.28082	130,344.03	1.67%	5.58%	9.65%
+7/3/2025	1077565.284	2.77%	1.32%	0.32%	-1.19%	0.25%	-0.01%	0.53%	-0.56%	0.69%	0.19%	0.89%	-0.95%	0.36%	3829.66702	130,686.66	0.26%	7.76%	9.93%
+7/4/2025	1081394.951	-0.79%	5.70%	-0.83%	4.06%	0.98%	-2.15%	4.68%	0.53%	9.53%	-0.11%	0.89%	2.54%	2.29%	24773.67694	131,949.06	0.97%	8.14%	11.00%
+7/7/2025	1106168.628	0.82%	0.48%	-0.36%	-0.25%	0.99%	0.86%	1.30%	0.69%	-2.02%	0.16%	-0.48%	2.59%	0.21%	2355.033009	133,370.16	1.08%	10.62%	12.19%
+7/8/2025	1108523.661	0.04%	0.29%	-0.68%	0.86%	-0.44%	-0.52%	-1.09%	1.95%	0.49%	0.66%	-0.91%	-1.41%	0.05%	521.0061208	133,403.19	0.02%	10.85%	12.22%
+7/9/2025	1109044.667	-0.53%	0.02%	0.19%	-1.20%	-0.74%	-1.04%	-0.73%	-0.61%	-0.41%	0.45%	-1.01%	0.13%	-0.48%	-5294.579242	132,576.98	-0.62%	10.90%	11.52%
+7/10/2025	1103750.088	-0.61%	1.09%	-0.34%	2.10%	0.27%	0.68%	0.95%	-0.28%	10.00%	0.79%	0.33%	1.96%	1.46%	16123.58129	133,782.34	0.91%	10.38%	12.54%
+7/11/2025	1119873.669	0.56%	2.40%	0.03%	-0.46%	-0.40%	0.25%	-0.51%	-0.14%	2.11%	4.39%	-0.11%	1.70%	0.60%	6681.166311	134,299.77	0.39%	11.99%	12.97%
+7/14/2025	1126554.836	-0.34%	5.45%	-0.13%	3.72%	0.34%	1.67%	0.65%	-0.07%	1.58%	5.86%	0.98%	-0.06%	1.65%	18617.44521	136,502.55	1.64%	12.66%	14.83%
+7/15/2025	1145172.281	-1.18%	2.70%	-0.79%	-0.10%	-0.94%	0.73%	-1.15%	0.75%	-4.16%	-0.06%	-0.84%	-1.87%	-0.51%	-5796.862086	135,939.88	-0.41%	14.52%	14.35%
+7/16/2025	1139375.419	-0.03%	-1.94%	-0.23%	-1.15%	-0.07%	5.44%	-0.64%	0.64%	1.81%	-0.14%	2.84%	0.48%	0.22%	2472.444659	136,379.97	0.32%	13.94%	14.72%
+7/17/2025	1141847.863	0.36%	2.82%	-0.10%	3.27%	2.48%	2.92%	4.48%	-0.14%	-0.19%	-0.12%	5.00%	0.84%	1.70%	19404.56259	138,665.50	1.68%	14.18%	16.65%
+7/18/2025	1161252.426	-0.84%	0.10%	-1.32%	-3.03%	0.11%	4.13%	-2.00%	1.08%	-2.00%	-0.60%	0.81%	-1.42%	-0.70%	-8183.345846	138,597.36	-0.05%	16.13%	16.59%
+7/21/2025	1153069.08	-0.94%	-1.06%	-0.33%	-0.86%	-0.27%	-1.48%	-1.05%	1.19%	2.17%	-0.09%	0.79%	0.12%	-0.25%	-2925.336257	138,217.58	-0.27%	15.31%	16.27%
+7/22/2025	1150143.744	2.46%	-0.95%	1.59%	0.02%	-0.18%	1.46%	-1.35%	0.61%	0.47%	0.15%	4.51%	-0.17%	0.51%	5882.98525	139,419.63	0.87%	15.01%	17.28%
+7/23/2025	1156026.729	-0.18%	0.02%	1.04%	-1.42%	-0.09%	-0.16%	0.78%	0.68%	6.92%	0.67%	-0.22%	-1.20%	0.55%	6301.501701	139,254.36	-0.12%	15.60%	17.14%
+7/24/2025	1162328.231	-0.40%	0.18%	-1.58%	-0.07%	-0.92%	-1.16%	1.38%	5.04%	-1.03%	0.39%	-1.27%	-0.37%	-0.08%	-890.3434249	138,692.67	-0.40%	16.23%	16.67%
+7/25/2025	1161437.887	0.26%	0.71%	-0.33%	2.00%	1.43%	-0.06%	0.62%	-2.21%	4.31%	0.37%	-0.38%	1.01%	0.83%	9696.844923	139,207.30	0.37%	16.14%	17.10%
+7/28/2025	1171134.732	0.54%	-1.20%	-0.54%	-2.14%	3.00%	0.22%	2.01%	0.03%	2.55%	0.86%	-0.04%	0.98%	0.30%	3485.296964	139,380.06	0.12%	17.11%	17.25%
+7/29/2025	1174620.029	-1.36%	-1.80%	-1.31%	-1.18%	-2.01%	0.75%	-2.42%	-0.16%	-3.90%	4.43%	-5.12%	-1.46%	-1.28%	-14979.92923	137,964.81	-1.02%	17.46%	16.06%
+7/30/2025	1159640.1	0.33%	2.08%	-0.40%	1.94%	-1.51%	-0.70%	6.90%	-1.02%	-3.85%	5.79%	0.53%	-0.41%	0.77%	8921.11129	138,412.25	0.32%	15.96%	16.43%
+7/31/2025	1168561.211	3.66%	0.23%	2.12%	0.86%	0.15%	-1.41%	7.59%	0.25%	0.32%	1.94%	-0.73%	-0.33%	1.32%	15414.49094	139,390.42	0.71%	16.86%	17.26%
+8/1/2025	1183975.702	9.72%	0.51%	1.75%	2.33%	0.83%	0.19%	-2.81%	3.39%	-1.55%	0.53%	1.00%	0.88%	1.48%	17561.91159	141,034.98	1.18%	18.40%	18.64%
+8/4/2025	1201537.614	1.78%	-0.14%	-0.51%	0.17%	3.39%	0.52%	2.99%	0.24%	1.05%	0.36%	-0.79%	-0.23%	0.78%	9344.358024	142,052.66	0.72%	20.15%	19.49%
+8/5/2025	1210881.972	-0.42%	1.03%	-0.69%	-0.10%	0.76%	2.08%	-0.47%	10.00%	-0.09%	0.01%	2.20%	2.24%	0.78%	9397.654985	143,037.17	0.69%	21.09%	20.32%
+8/6/2025	1220279.627	1.20%	1.83%	-0.20%	9.83%	1.57%	-1.04%	0.12%	10.00%	6.13%	0.14%	2.32%	-0.33%	2.96%	36090.99025	145,088.50	1.43%	22.03%	22.05%
+8/7/2025	1256370.617	1.85%	0.57%	0.22%	-0.67%	0.38%	-3.47%	2.98%	-5.55%	-2.61%	-2.53%	3.36%	2.16%	-0.23%	-2835.628483	145,647.14	0.39%	25.64%	22.52%
+8/8/2025	1253534.989	1.27%	0.09%	-1.00%	1.02%	-1.98%	0.86%	-1.61%	-0.96%	-0.61%	-0.23%	-4.51%	2.33%	-0.25%	-3163.922312	145,382.80	-0.18%	25.35%	22.30%
+8/11/2025	1250371.066	2.44%	0.39%	7.68%	0.63%	0.31%	-0.22%	-0.79%	-1.11%	0.76%	-0.10%	-1.01%	1.45%	0.95%	11846.01548	146,929.84	1.06%	25.04%	23.60%
+8/12/2025	1262217.082	-2.00%	-0.32%	-2.51%	0.85%	0.67%	-1.11%	1.73%	-1.00%	0.22%	0.23%	-1.15%	-0.29%	-0.25%	-3156.804922	147,005.31	0.05%	26.22%	23.66%
+8/13/2025	1259060.277	-0.75%	-0.47%	-1.27%	2.93%	1.86%	-1.07%	-1.30%	-0.05%	2.85%	1.46%	-2.71%	-1.40%	0.38%	4756.729726	146,529.31	-0.32%	25.91%	23.26%
+8/15/2025	1263817.007	-2.57%	-1.34%	-0.90%	0.64%	2.31%	-0.03%	-0.83%	-1.19%	4.80%	-0.02%	3.25%	-1.45%	0.22%	2793.035585	146,491.63	-0.03%	26.38%	23.23%
+8/18/2025	1266610.042	0.38%	0.90%	0.57%	-0.03%	4.23%	0.45%	-0.50%	-2.99%	-0.09%	0.70%	1.22%	0.67%	0.43%	5469.222163	148,196.42	1.16%	26.66%	24.66%
+8/19/2025	1272079.264	-1.46%	2.00%	-0.77%	0.45%	3.64%	-0.63%	-1.51%	-0.52%	-2.37%	2.23%	-0.27%	-1.02%	0.00%	41.97861573	149,770.75	1.06%	27.21%	25.99%
+8/20/2025	1272121.243	-0.55%	-0.37%	-0.35%	3.53%	-0.32%	-1.11%	3.51%	0.32%	-0.01%	0.25%	-1.17%	0.53%	0.60%	7613.64564	150,591.00	0.55%	27.21%	26.68%
+8/21/2025	1279734.889	1.05%	-0.73%	-0.63%	-2.05%	-1.11%	-0.62%	1.26%	-0.26%	-0.78%	-0.04%	-0.64%	1.27%	-0.42%	-5330.095811	149,235.27	-0.90%	27.97%	25.54%
+8/22/2025	1274404.793	0.83%	0.29%	0.44%	2.35%	-0.67%	0.73%	-0.01%	-1.49%	-0.07%	0.71%	-0.69%	-0.73%	0.39%	4988.020359	149,493.06	0.17%	27.44%	25.75%
+8/25/2025	1279392.813	-0.82%	-0.15%	-0.06%	0.76%	-0.84%	-0.11%	-2.02%	-1.56%	-0.28%	1.17%	0.25%	-1.00%	-0.29%	-3664.181017	148,815.31	-0.45%	27.94%	25.18%
+8/26/2025	1275728.632	-0.21%	-0.48%	-0.29%	-1.21%	0.45%	1.19%	-0.31%	1.50%	-0.68%	3.75%	-0.84%	-0.23%	-0.03%	-325.3108012	148,435.06	-0.26%	27.57%	24.86%
+8/27/2025	1275403.321	-0.03%	0.08%	-1.14%	-2.51%	-0.19%	-0.31%	-1.14%	0.75%	-0.01%	-1.40%	-0.25%	-1.26%	-0.67%	-8541.376044	147,494.03	-0.63%	27.54%	24.07%
+8/28/2025	1266861.945	0.35%	0.41%	0.17%	0.32%	0.88%	-0.91%	-1.30%	1.00%	4.47%	0.06%	-0.39%	0.52%	0.50%	6341.910899	147,343.52	-0.10%	26.69%	23.95%
+8/29/2025	1273203.856	1.19%	-0.25%	0.62%	-0.40%	2.19%	-0.03%	2.72%	1.75%	-1.62%	1.73%	0.08%	-0.44%	0.50%	6306.1787	148,617.78	0.86%	27.32%	25.02%
+9/1/2025	1279510.035	2.27%	-0.17%	0.66%	3.42%	4.24%	-0.63%	-1.77%	-0.91%	1.67%	-0.38%	0.88%	0.59%	1.08%	13767.52798	149,971.13	0.91%	27.95%	26.16%
+9/2/2025	1293277.563	-0.38%	0.52%	1.16%	-0.14%	-1.08%	1.32%	0.50%	-0.67%	-0.69%	0.12%	2.59%	0.69%	0.15%	1915.344071	150,975.48	0.67%	29.33%	27.00%
+9/3/2025	1295192.907	1.40%	0.40%	1.24%	1.27%	0.56%	1.45%	0.52%	0.38%	0.50%	0.08%	0.55%	-0.29%	0.72%	9330.569702	152,201.88	0.81%	29.52%	28.03%
+9/4/2025	1304523.477	-0.99%	0.13%	1.02%	0.82%	2.20%	1.13%	2.08%	0.51%	0.39%	-0.36%	-1.15%	0.65%	0.54%	7091.38962	152,665.72	0.30%	30.45%	28.42%
+9/5/2025	1311614.866	0.96%	-0.47%	-0.08%	9.88%	2.93%	-0.80%	-0.41%	-0.47%	1.16%	0.41%	0.71%	-0.04%	1.81%	23759.9033	154,277.19	1.06%	31.16%	29.78%
+9/8/2025	1335374.77	0.74%	-1.29%	2.16%	-0.11%	2.66%	0.66%	-0.57%	0.41%	0.96%	0.42%	-0.04%	1.19%	0.48%	6449.860138	156,087.31	1.17%	33.54%	31.30%
+9/9/2025	1341824.63	-0.67%	0.30%	3.24%	2.42%	0.51%	1.57%	-0.64%	0.21%	-1.27%	-0.54%	2.19%	0.64%	0.64%	8614.514123	156,563.53	0.31%	34.18%	31.70%
+9/10/2025	1350439.144	-0.08%	-0.81%	1.02%	0.77%	0.46%	-0.27%	-0.50%	0.01%	-0.04%	-0.41%	3.26%	4.35%	0.33%	4511.81718	157,020.80	0.29%	35.04%	32.09%
+9/11/2025	1354950.961	-0.80%	-0.15%	-1.90%	-0.77%	-0.53%	-0.64%	0.26%	-1.27%	-0.21%	-0.38%	-2.00%	5.88%	-0.43%	-5772.091094	156,141.25	-0.56%	35.50%	31.35%
+9/12/2025	1349178.87	-1.17%	-3.18%	-1.08%	2.69%	-1.35%	-1.32%	0.09%	-1.93%	0.36%	-0.06%	-0.87%	-1.00%	-0.40%	-5369.731903	154,439.69	-1.09%	34.92%	29.91%
+9/15/2025	1343809.138	0.35%	0.86%	0.54%	1.96%	0.51%	2.06%	0.40%	2.06%	-0.08%	-0.05%	0.91%	0.65%	0.80%	10685.97027	155,384.52	0.61%	34.38%	30.71%
+9/16/2025	1354495.108	1.37%	0.25%	1.06%	-0.28%	0.20%	-0.79%	-0.37%	-0.04%	0.34%	0.37%	0.54%	0.63%	0.23%	3100.439303	156,180.94	0.51%	35.45%	31.38%
+9/17/2025	1357595.548	-0.66%	-0.35%	-0.53%	-0.79%	0.64%	-0.03%	2.85%	-0.22%	0.53%	-0.58%	-0.28%	-0.69%	-0.01%	-70.59496848	156,177.81	0.00%	35.76%	31.38%
+9/18/2025	1357524.953	0.64%	0.77%	-1.24%	4.09%	0.81%	0.15%	0.28%	0.91%	0.04%	0.09%	0.04%	0.55%	0.82%	11070.61599	157,953.47	1.14%	35.75%	32.87%
+9/19/2025	1368595.569	1.89%	-2.11%	-0.72%	-0.33%	0.73%	-0.33%	2.30%	0.23%	0.49%	-0.06%	-0.16%	5.13%	0.31%	4306.970255	158,037.38	0.05%	36.86%	32.94%
+9/22/2025	1372902.539	1.22%	-2.50%	0.70%	-0.86%	-1.15%	-0.65%	0.50%	-0.39%	5.83%	-0.08%	-0.89%	-0.84%	0.17%	2380.613003	157,554.66	-0.31%	37.29%	32.53%
+9/23/2025	1375283.152	0.74%	2.27%	1.22%	0.42%	-1.28%	-0.28%	0.45%	-0.43%	-1.53%	10.00%	-0.22%	3.06%	0.78%	10720.33217	157,945.03	0.25%	37.53%	32.86%
+9/24/2025	1386003.484	0.05%	0.91%	1.04%	-1.07%	-0.30%	-0.79%	-1.32%	0.28%	-1.37%	3.52%	-1.24%	-0.11%	-0.15%	-2128.901352	158,236.69	0.18%	38.60%	33.11%
+9/25/2025	1383874.583	-1.76%	-0.61%	2.73%	1.70%	-2.15%	-0.39%	-0.56%	0.42%	-0.84%	0.88%	2.61%	1.38%	0.14%	1902.827551	159,280.09	0.66%	38.39%	33.99%
+9/26/2025	1385777.41	0.95%	3.01%	3.92%	1.71%	1.28%	2.57%	2.01%	0.12%	-1.18%	2.43%	0.72%	0.15%	1.41%	19511.74594	162,257.02	1.87%	38.58%	36.49%
+
+TABLE:
+
+Asset Allocation		
+Companies	Percentage	
+Oil and Gas Developmdent Company Limited	10%	
+United Bank Limited	9%	
+Mari Energies	8%	
+National Bank of Pakistan	15%	
+Lucky Cement	8%	
+Fauji Fertilizer Company	6%	
+Systems Limited	8%	
+NESTLE	5%	
+Ghandhara Automobiles Limited	9%	
+Bestway Cement Limited	5%	
+Engro Fertilizers	4%	
+Pakistan Tobacco Company Limited	3%	
+Cash for Day Trading	5%	
+Cash to Buy Dips	5%	
+		
+Chart image is pasted
+
+so basically i want a working & presentable stock screener with all the info proper stock loading system showing how many stocks loaded how many left & eeverything and a proper about us section like everything ready to be done add images too in website make it nice make it best with proper Ui & functionality
+
+the txt 1 ive pasted is the documentation for the Scraper we will use & the docx ive pasted after that is for all website text content so use that in about me & landing pages and everything and the excel after that has pre made indicators and everything to make filters work nicely and amazingly to fill in gaps for the stock whose data isnt being loaded and the python file ive given is main backbone its the scraper which will scrape all 300 stocks from the psx and last image is of graph i want to represent somewhere in graph
+
+
+
+please make it with nice UI and for stock screener all the filters should be from the above raw excel i gave u first and properly working no flaw also the loading system must be proper with nice error handling & all proper refresh functionality and all 
+
+the stock details page must be showing graph & all and for the missing feilds instead of showing N/A use the data from excel ive pasted and gave u raw form in text too or just show nothing but dont show N/A it will look website is lacking information so yeah
+
+our main function is of filtering and stock short listing so make sure the filters are proper and user friendly working and shortlisting stocks in nice way make website professional use related images in landing page nice animations and evertyhing lets launch it for public use!! 
+
+
