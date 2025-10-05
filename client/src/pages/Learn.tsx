@@ -118,34 +118,6 @@ export default function Learn() {
         </div>
 
         <div>
-          <h3 className="text-2xl font-bold text-foreground mb-6">Courses</h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mb-10">
-            {courses.map((course) => {
-              return (
-                <Link key={course.slug} href={`/learn/courses/${course.slug}`}>
-                  <MotionItem className="bg-card rounded-lg p-4 border border-border hover:shadow-lg transition-shadow cursor-pointer">
-                    <div className="flex items-start gap-3 mb-3">
-                      <div className="w-10 h-10 bg-primary/8 rounded-md flex items-center justify-center mt-1">
-                        <BookOpen className="text-primary" size={20} />
-                      </div>
-                      <div>
-                        <div className="text-sm font-medium text-muted-foreground">Course</div>
-                        <h4 className="text-base font-semibold text-foreground">{course.title}</h4>
-                        <p className="text-sm text-muted-foreground mt-2">{course.description}</p>
-                      </div>
-                    </div>
-
-                    <div className="mt-3 flex items-center justify-between">
-                      <div className="text-xs text-muted-foreground">DOCX • View online</div>
-                      <div className="text-sm text-primary">Open →</div>
-                    </div>
-                  </MotionItem>
-                </Link>
-              );
-            })}
-          </div>
-
-          <hr className="my-10 border-t border-border" />
 
         <div className="mb-10">
           <div className="flex items-center justify-between mb-4">
