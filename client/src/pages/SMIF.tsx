@@ -174,6 +174,29 @@ export default function SMIF() {
         </MotionItem>
 
         <MotionItem>
+          <div className="bg-card rounded-xl p-8 border border-border mb-12">
+            <h3 className="text-2xl font-semibold text-foreground mb-6">SMIF Governance Panel</h3>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+              {governance.map((m, idx) => (
+                <Card
+                  key={m.name}
+                  className="gradient-card border border-border/60 hover-lift transition-shadow duration-300 hover:shadow-xl"
+                  data-testid={`gov-card-${idx + 1}`}
+                >
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-xl text-foreground">{m.name}</CardTitle>
+                    <CardDescription className="text-sm">{m.title}</CardDescription>
+                  </CardHeader>
+                  <CardContent className="pt-2">
+                    <p className="text-sm text-foreground/90 leading-relaxed">{m.description}</p>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          </div>
+        </MotionItem>
+
+        <MotionItem>
           <div className="glass-dark rounded-xl p-12 text-center">
             <h3 className="text-3xl font-bold text-foreground mb-4">Ready to Join MAYS SMIF?</h3>
             <p className="text-lg text-muted-foreground mb-8 max-w-2xl mx-auto">
