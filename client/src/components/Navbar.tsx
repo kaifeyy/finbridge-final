@@ -30,6 +30,12 @@ export default function Navbar() {
               </div>
             </Link>
 
+            <Link href="/scholars" className="block" style={{ marginLeft: '24px' }}>
+              <div style={{ font: '500 14px/20px Times New Roman, serif', position: 'relative', transitionDuration: '0.15s', transitionProperty: 'color, background-color, border-color, text-decoration-color, fill, stroke', transitionTimingFunction: 'cubic-bezier(0.4, 0, 0.2, 1)' }}>
+                Scholars
+              </div>
+            </Link>
+
             <Link href="/about" className="block" style={{ marginLeft: '24px' }}>
               <div style={{ position: 'relative', display: 'inline', transitionDuration: '0.15s', transitionProperty: 'color, background-color, border-color, text-decoration-color, fill, stroke', transitionTimingFunction: 'cubic-bezier(0.4, 0, 0.2, 1)', font: '500 14px/20px Times New Roman, serif' }}>
                 <div style={{ fontFamily: 'Times New Roman, serif' }}>About Us</div>

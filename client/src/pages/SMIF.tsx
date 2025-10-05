@@ -7,6 +7,7 @@ import { Dialog, DialogTrigger, DialogContent, DialogHeader, DialogFooter, Dialo
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 
 const performanceData = [
   { month: 'Jan', smif: 100, kse: 100 },
@@ -26,6 +27,45 @@ const holdings = [
 
 export default function SMIF() {
   const [open, setOpen] = useState(false);
+  const governance = [
+    {
+      name: "Dr. Ahsan Malik",
+      title: "Faculty Advisor — Portfolio Management & Statistical Analysis",
+      description:
+        "Oversees fund portfolio strategy and performance analytics. Provides mentorship in quantitative methods, asset allocation, and statistical modeling to enhance research accuracy and portfolio optimization.",
+    },
+    {
+      name: "Dr. Hina Rauf",
+      title: "Faculty Advisor — Financial Ratios & Market Research",
+      description:
+        "Specializes in financial statement interpretation, ratio-based valuation, and macroeconomic trend analysis. Guides students in applying market research insights to inform evidence-based investment decisions.",
+    },
+    {
+      name: "Ahmed Ali",
+      title: "Lead Student Analyst — SMIF",
+      description:
+        "Leads the student research team, coordinates investment strategy implementation, and ensures analytical consistency across fund activities under faculty supervision.",
+    },
+    {
+      name: "Maria Khan",
+      title: "Student Analyst — Equity Research",
+      description:
+        "Conducts fundamental and sector-level research, builds valuation models, and prepares investment proposals for review by the Governance Panel.",
+    },
+    {
+      name: "Bilal Hussain",
+      title: "Student Analyst — Risk & Portfolio Management",
+      description:
+        "Focuses on portfolio risk assessment, performance evaluation, and diversification strategy to support sustainable fund growth.",
+    },
+    {
+      name: "Sara Ahmed",
+      title: "Student Analyst — Market Intelligence & Reporting",
+      description:
+        "Monitors market movements, macroeconomic indicators, and prepares detailed reporting dashboards for fund evaluation and decision-making.",
+    },
+  ];
+
   return (
     <MotionContainer className="bg-background min-h-screen py-20" data-testid="page-smif">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -129,6 +169,29 @@ export default function SMIF() {
                   ))}
                 </tbody>
               </table>
+            </div>
+          </div>
+        </MotionItem>
+
+        <MotionItem>
+          <div className="bg-card rounded-xl p-8 border border-border mb-12">
+            <h3 className="text-2xl font-semibold text-foreground mb-6">SMIF Governance Panel</h3>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+              {governance.map((m, idx) => (
+                <Card
+                  key={m.name}
+                  className="gradient-card border border-border/60 hover-lift transition-shadow duration-300 hover:shadow-xl"
+                  data-testid={`gov-card-${idx + 1}`}
+                >
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-xl text-foreground">{m.name}</CardTitle>
+                    <CardDescription className="text-sm">{m.title}</CardDescription>
+                  </CardHeader>
+                  <CardContent className="pt-2">
+                    <p className="text-sm text-foreground/90 leading-relaxed">{m.description}</p>
+                  </CardContent>
+                </Card>
+              ))}
             </div>
           </div>
         </MotionItem>
