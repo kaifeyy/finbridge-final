@@ -27,6 +27,45 @@ const holdings = [
 
 export default function SMIF() {
   const [open, setOpen] = useState(false);
+  const governance = [
+    {
+      name: "Dr. Ahsan Malik",
+      title: "Faculty Advisor — Portfolio Management & Statistical Analysis",
+      description:
+        "Oversees fund portfolio strategy and performance analytics. Provides mentorship in quantitative methods, asset allocation, and statistical modeling to enhance research accuracy and portfolio optimization.",
+    },
+    {
+      name: "Dr. Hina Rauf",
+      title: "Faculty Advisor — Financial Ratios & Market Research",
+      description:
+        "Specializes in financial statement interpretation, ratio-based valuation, and macroeconomic trend analysis. Guides students in applying market research insights to inform evidence-based investment decisions.",
+    },
+    {
+      name: "Ahmed Ali",
+      title: "Lead Student Analyst — SMIF",
+      description:
+        "Leads the student research team, coordinates investment strategy implementation, and ensures analytical consistency across fund activities under faculty supervision.",
+    },
+    {
+      name: "Maria Khan",
+      title: "Student Analyst — Equity Research",
+      description:
+        "Conducts fundamental and sector-level research, builds valuation models, and prepares investment proposals for review by the Governance Panel.",
+    },
+    {
+      name: "Bilal Hussain",
+      title: "Student Analyst — Risk & Portfolio Management",
+      description:
+        "Focuses on portfolio risk assessment, performance evaluation, and diversification strategy to support sustainable fund growth.",
+    },
+    {
+      name: "Sara Ahmed",
+      title: "Student Analyst — Market Intelligence & Reporting",
+      description:
+        "Monitors market movements, macroeconomic indicators, and prepares detailed reporting dashboards for fund evaluation and decision-making.",
+    },
+  ];
+
   return (
     <MotionContainer className="bg-background min-h-screen py-20" data-testid="page-smif">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
