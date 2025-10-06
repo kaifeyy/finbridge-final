@@ -2,7 +2,7 @@ import { ArrowRight } from "lucide-react";
 import { formatCurrency } from "@/lib/stockData";
 import { ResponsiveContainer, LineChart, Line, XAxis, YAxis, Tooltip, Legend } from "recharts";
 import { MotionContainer, MotionItem } from "@/components/Motion";
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { Dialog, DialogTrigger, DialogContent, DialogHeader, DialogFooter, DialogTitle, DialogDescription, DialogClose } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -52,6 +52,22 @@ export default function SMIF() {
   const kseReturn = ((kseEnd / kseStart) - 1) * 100;
   const outperformance = smifReturn - kseReturn;
   const pct = (n: number) => `${n >= 0 ? "+" : ""}${n.toFixed(1)}%`;
+
+  const weeklyStart = new Date(2025, 5, 2);
+  const monthIndexMap = useMemo(() => {
+    const map: Record<string, number> = {};
+    for (let i = 0; i < performanceData.length; i++) {
+      map[String(performanceData[i].month)] = i;
+    }
+    return map;
+  }, []);
+  const formatWeeklyTick = (value: any) => {
+    const i = monthIndexMap[String(value)];
+    if (i == null) return String(value);
+    const d = new Date(weeklyStart);
+    d.setDate(d.getDate() + i * 7);
+    return d.toLocaleString("en-US", { month: "short", day: "numeric" });
+  };
   const governance = [
     {
       name: "Dr. Ahsan Malik",
@@ -121,8 +137,8 @@ export default function SMIF() {
 
             <ResponsiveContainer width="100%" height={320}>
               <LineChart data={performanceData}>
-                <XAxis dataKey="month" stroke={getComputedStyle(document.documentElement).getPropertyValue('--muted-foreground') || '#64748b'} />
-                <YAxis stroke={getComputedStyle(document.documentElement).getPropertyValue('--muted-foreground') || '#64748b'} />
+                <XAxis dataKey="month" tickFormatter={formatWeeklyTick} stroke={getComputedStyle(document.documentElement).getPropertyValue('--muted-foreground') || '#64748b'} />
+                <YAxis domain={[100, 'dataMax']} stroke={getComputedStyle(document.documentElement).getPropertyValue('--muted-foreground') || '#64748b'} />
                 <Tooltip
                   contentStyle={{
                     backgroundColor: getComputedStyle(document.documentElement).getPropertyValue('--card') || '#ffffff',
