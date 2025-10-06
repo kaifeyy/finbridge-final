@@ -122,7 +122,7 @@ export default function SMIF() {
             <ResponsiveContainer width="100%" height={320}>
               <LineChart data={performanceData}>
                 <XAxis dataKey="month" stroke={getComputedStyle(document.documentElement).getPropertyValue('--muted-foreground') || '#64748b'} />
-                <YAxis stroke={getComputedStyle(document.documentElement).getPropertyValue('--muted-foreground') || '#64748b'} />
+                <YAxis domain={[100, 'dataMax']} stroke={getComputedStyle(document.documentElement).getPropertyValue('--muted-foreground') || '#64748b'} />
                 <Tooltip
                   contentStyle={{
                     backgroundColor: getComputedStyle(document.documentElement).getPropertyValue('--card') || '#ffffff',
