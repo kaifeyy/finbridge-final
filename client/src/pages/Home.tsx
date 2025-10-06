@@ -20,11 +20,11 @@ export default function Home() {
           <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8, ease: "easeOut" }} className="w-full">
             <MotionContainer className="text-center max-w-4xl mx-auto">
               <MotionItem>
-                <h1 className="text-5xl md:text-6xl font-bold text-foreground mb-6 leading-tight" style={{ font: '700 60px/60px "Times New Roman", serif' }}>
+                <h1 className="text-5xl md:text-6xl font-bold text-foreground mb-6 leading-tight -mt-6" style={{ font: '700 60px/60px "Times New Roman", serif' }}>
                   <div style={{ fontFamily: 'Times New Roman, serif' }}>
                     Bringing Wall Street to{" "}
                   </div>
-                  <div className="inline font-bold" style={{ color: 'rgba(25, 95, 255, 1)' }}>
+                  <div className="inline font-bold text-black">
                     Every Street
                   </div>
                 </h1>
