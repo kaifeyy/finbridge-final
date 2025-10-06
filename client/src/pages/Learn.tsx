@@ -188,9 +188,9 @@ export default function Learn() {
         </div>
 
         <div className="text-center mt-16">
-          <button className="px-8 py-4 gradient-primary text-white rounded-lg font-semibold hover:opacity-90 transition-all hover-lift text-lg" data-testid="button-explore-library">
+          <Link href="/learn/library" className="inline-block px-8 py-4 gradient-primary text-white rounded-lg font-semibold hover:opacity-90 transition-all hover-lift text-lg" data-testid="button-explore-library">
             Explore Full Learning Library
-          </button>
+          </Link>
         </div>
         </div>
       </div>
