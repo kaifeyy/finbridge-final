@@ -364,13 +364,6 @@ const topics: Topic[] = [
   },
 ];
 
-// Add remaining topics to reach all items from the provided list
-const remaining: Topic[] = [
-  // We already covered 1..15,16..22,23..37 across the arrays above.
-  // This const exists to keep structure explicit and ready for future extension if needed.
-];
-
-const allTopics = topics.concat(remaining);
 
 function TopicCard({ topic }: { topic: Topic }) {
   const Icon = topic.icon;
@@ -421,7 +414,7 @@ export default function LearningLibrary() {
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-          {allTopics.map((t, i) => (
+          {topics.map((t, i) => (
             <TopicCard topic={t} key={i} />
           ))}
         </div>
