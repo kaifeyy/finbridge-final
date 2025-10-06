@@ -7,7 +7,8 @@ interface CoursePageProps {
 }
 
 export default function CoursePage({ title, docxUrl }: CoursePageProps) {
-  const embedSrc = `https://view.officeapps.live.com/op/embed.aspx?src=${encodeURIComponent(docxUrl)}`;
+  const absoluteUrl = /^https?:/i.test(docxUrl) ? docxUrl : `${window.location.origin}${docxUrl}`;
+  const embedSrc = `https://view.officeapps.live.com/op/embed.aspx?src=${encodeURIComponent(absoluteUrl)}`;
 
   return (
     <MotionContainer className="bg-background min-h-screen py-20">
