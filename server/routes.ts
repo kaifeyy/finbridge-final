@@ -220,9 +220,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Serve course documents via a proxy endpoint so external viewers can load them without exposing query tokens.
   const courseDocs: Record<string, string> = {
-    'income-investing': 'https://cdn.builder.io/o/assets%2Fca35db826797471cb8e33731c10b3ab1%2Ff6d7cfe0397347a9bf821fbeef4f4b24?alt=media&token=93be7fdc-bf13-463b-ac99-768362003904&apiKey=ca35db826797471cb8e33731c10b3ab1',
-    'stock-investing': 'https://cdn.builder.io/o/assets%2Fca35db826797471cb8e33731c10b3ab1%2Fe1a5761f9fa44ab98787183eee34c065?alt=media&token=b590b695-6e58-43f1-819f-418f97bf3f45&apiKey=ca35db826797471cb8e33731c10b3ab1',
-    'stock-trading': 'https://cdn.builder.io/o/assets%2Fca35db826797471cb8e33731c10b3ab1%2F6334288fbb4b4667af07062ece679ac5?alt=media&token=7cea295c-ca95-4e20-b87a-55f3b9acffaf&apiKey=ca35db826797471cb8e33731c10b3ab1',
+    'income-investing': 'https://cdn.builder.io/o/assets%2F553a550bb5bc422b941c5e7aeee716cf%2F4fe24d6a26ac4730b2305040c0943431?alt=media&token=6d37d467-363b-4ed3-a452-844aba456538&apiKey=553a550bb5bc422b941c5e7aeee716cf',
+    'stock-investing': 'https://cdn.builder.io/o/assets%2F553a550bb5bc422b941c5e7aeee716cf%2F317e69128ff042c5a9a21d176bd9d0a1?alt=media&token=a7381447-b8ed-4d06-884e-acd0c0ec26b3&apiKey=553a550bb5bc422b941c5e7aeee716cf',
+    'stock-trading': 'https://cdn.builder.io/o/assets%2F553a550bb5bc422b941c5e7aeee716cf%2F3efcb9bace734bc188c07a7db9d0a778?alt=media&token=5fd687ff-ef43-4acc-b60e-ba86c5a8c58e&apiKey=553a550bb5bc422b941c5e7aeee716cf',
   };
 
   app.get('/courses/doc/:id', async (req, res) => {
@@ -236,8 +236,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(502).json({ message: 'Failed to fetch upstream document' });
       }
 
-      const contentType = response.headers.get('content-type') || 'application/octet-stream';
-      res.setHeader('Content-Type', contentType);
+      // Force DOCX content type for maximum compatibility with Office Online viewer
+      res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document');
+      res.setHeader('Content-Disposition', 'inline; filename="course.docx"');
       res.setHeader('Cache-Control', 'public, max-age=3600');
 
       const arrayBuffer = await response.arrayBuffer();

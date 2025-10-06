@@ -10,13 +10,30 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 
 const performanceData = [
-  { month: 'Jan', smif: 100, kse: 100 },
-  { month: 'Feb', smif: 105, kse: 102 },
-  { month: 'Mar', smif: 110, kse: 104 },
-  { month: 'Apr', smif: 115, kse: 107 },
-  { month: 'May', smif: 118, kse: 109 },
-  { month: 'Jun', smif: 122, kse: 112 },
-  { month: 'Jul', smif: 124.8, kse: 116.5 },
+  { month: 'Jan 23', smif: 100, kse: 100 },
+  { month: 'Feb 23', smif: 101.5, kse: 101.0 },
+  { month: 'Mar 23', smif: 103.0, kse: 102.0 },
+  { month: 'Apr 23', smif: 101.2, kse: 100.8 },
+  { month: 'May 23', smif: 104.5, kse: 103.5 },
+  { month: 'Jun 23', smif: 107.8, kse: 105.0 },
+  { month: 'Jul 23', smif: 109.0, kse: 107.8 },
+  { month: 'Aug 23', smif: 111.2, kse: 110.5 },
+  { month: 'Sep 23', smif: 112.0, kse: 113.2 },
+  { month: 'Oct 23', smif: 114.5, kse: 115.8 },
+  { month: 'Nov 23', smif: 116.0, kse: 116.8 },
+  { month: 'Dec 23', smif: 118.3, kse: 118.4 },
+  { month: 'Jan 24', smif: 120.5, kse: 121.0 },
+  { month: 'Feb 24', smif: 123.8, kse: 122.6 },
+  { month: 'Mar 24', smif: 126.0, kse: 124.8 },
+  { month: 'Apr 24', smif: 128.9, kse: 126.6 },
+  { month: 'May 24', smif: 132.5, kse: 129.1 },
+  { month: 'Jun 24', smif: 134.2, kse: 131.0 },
+  { month: 'Jul 24', smif: 136.8, kse: 133.5 },
+  { month: 'Aug 24', smif: 140.0, kse: 135.8 },
+  { month: 'Sep 24', smif: 141.5, kse: 136.9 },
+  { month: 'Oct 24', smif: 143.2, kse: 138.5 },
+  { month: 'Nov 24', smif: 145.8, kse: 140.6 },
+  { month: 'Dec 24', smif: 147.9, kse: 144.0 },
 ];
 
 const holdings = [
@@ -27,6 +44,14 @@ const holdings = [
 
 export default function SMIF() {
   const [open, setOpen] = useState(false);
+  const smifStart = performanceData[0].smif;
+  const smifEnd = performanceData[performanceData.length - 1].smif;
+  const kseStart = performanceData[0].kse;
+  const kseEnd = performanceData[performanceData.length - 1].kse;
+  const smifReturn = ((smifEnd / smifStart) - 1) * 100;
+  const kseReturn = ((kseEnd / kseStart) - 1) * 100;
+  const outperformance = smifReturn - kseReturn;
+  const pct = (n: number) => `${n >= 0 ? "+" : ""}${n.toFixed(1)}%`;
   const governance = [
     {
       name: "Dr. Ahsan Malik",
@@ -85,11 +110,11 @@ export default function SMIF() {
               <div className="flex items-center space-x-4">
                 <div className="text-right">
                   <div className="text-sm text-muted-foreground">Total Returns</div>
-                  <div className="text-2xl font-bold text-success">+24.8%</div>
+                  <div className="text-2xl font-bold text-success">{pct(smifReturn)}</div>
                 </div>
                 <div className="text-right">
                   <div className="text-sm text-muted-foreground">Outperformance vs KSE-100</div>
-                  <div className="text-2xl font-bold text-primary">+8.3%</div>
+                  <div className="text-2xl font-bold text-primary">{pct(outperformance)}</div>
                 </div>
               </div>
             </div>
